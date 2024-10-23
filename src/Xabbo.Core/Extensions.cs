@@ -857,7 +857,7 @@ public static class Extensions
     /// <summary>
     /// Gets items of the specified kinds.
     /// </summary>
-    public static IEnumerable<T> OfKinds<T>(this IEnumerable<T> items, IEnumerable<int> kinds)
+    public static IEnumerable<T> OfKind<T>(this IEnumerable<T> items, IEnumerable<int> kinds)
         where T : IFloorItem, IWallItem
     {
         HashSet<int> set = new(kinds);
@@ -867,8 +867,8 @@ public static class Extensions
     /// <summary>
     /// Gets items of the specified kinds.
     /// </summary>
-    public static IEnumerable<T> OfKinds<T>(this IEnumerable<T> items, params int[] kinds)
-        where T : IFloorItem, IWallItem => OfKinds<T>(items, (IEnumerable<int>)kinds);
+    public static IEnumerable<T> OfKind<T>(this IEnumerable<T> items, params int[] kinds)
+        where T : IFloorItem, IWallItem => OfKind<T>(items, (IEnumerable<int>)kinds);
 
     /// <summary>
     /// Gets items owned by the specified user ID.
