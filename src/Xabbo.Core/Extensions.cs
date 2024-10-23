@@ -18,8 +18,11 @@ public static class Extensions
     private static FurniData? _furniData;
     private static ExternalTexts? _texts;
 
-    private static FurniData FurniData => _furniData ?? throw new InvalidOperationException($"{typeof(Extensions).FullName} has not been initialized.");
-    private static ExternalTexts Texts => _texts ?? throw new InvalidOperationException($"{typeof(Extensions).FullName} has not been initialized.");
+    private static FurniData RequireFurniData() => _furniData
+        ?? throw new InvalidOperationException($"{typeof(Extensions).FullName} has not been initialized.");
+
+    private static ExternalTexts RequireTexts() => _texts
+        ?? throw new InvalidOperationException($"{typeof(Extensions).FullName} has not been initialized.");
 
     /// <summary>
     /// Gets whether xabbo core extensions have been initialized.
@@ -39,14 +42,18 @@ public static class Extensions
 
     #region - Items -
     /// <summary>
-    /// Gets the name of an item or a generic type/kind specifier if unavailable.
+    /// Gets the name of an item, or if it is unavailable, returns its identifier or a generic
+    /// type/kind specifier.
     /// </summary>
     internal static string GetNameOrDefault(this IItem item)
     {
         if (TryGetName(item, out string? name))
             return name;
 
-        TryGetVariant(item, out string? variant);
+        bool hasVariant = TryGetVariant(item, out string? variant);
+
+        if (item.Identifier is string identifier)
+            return hasVariant ? $"{identifier}:{variant}" : identifier;
 
         return item.Type switch
         {
@@ -56,23 +63,62 @@ public static class Extensions
     }
 
     /// <inheritdoc cref="FurniData.HasVariant(IItem)" />
-    public static bool HasVariant(this IItem item) => FurniData.HasVariant(item);
+    /// <remarks>
+    /// This method will throw an exception if extensions have not been initialized.
+    /// </remarks>
+    public static bool HasVariant(this IItem item) => RequireFurniData().HasVariant(item);
 
     /// <inheritdoc cref="FurniData.GetVariant(IItem)" />
-    public static string? GetVariant(this IItem item) => FurniData.GetVariant(item);
+    /// <remarks>
+    /// This method will throw an exception if extensions have not been initialized.
+    /// </remarks>
+    public static string? GetVariant(this IItem item) => RequireFurniData().GetVariant(item);
 
     /// <inheritdoc cref="FurniData.TryGetVariant(IItem, out string?)" />
-    public static bool TryGetVariant(this IItem item, [NotNullWhen(true)] out string? variant) => FurniData.TryGetVariant(item, out variant);
+    /// <remarks>
+    /// This method will throw an exception if extensions have not been initialized.
+    /// </remarks>
+    public static bool TryGetVariant(this IItem item, [NotNullWhen(true)] out string? variant)
+    {
+        if (_furniData is not { } furniData)
+        {
+            if (FurniData.MayHaveVariant(item))
+            {
+                variant = FurniData.ExtractPotentialVariant(item);
+                return variant is not null;
+            }
+
+            variant = null;
+            return false;
+        }
+
+        return furniData.TryGetVariant(item, out variant);
+    }
 
     /// <inheritdoc cref="FurniData.GetInfo(IItem)" />
-    public static FurniInfo GetInfo(this IItem item) => FurniData.GetInfo(item);
+    /// <remarks>
+    /// This method will throw an exception if extensions have not been initialized.
+    /// </remarks>
+    public static FurniInfo GetInfo(this IItem item) => RequireFurniData().GetInfo(item);
 
     /// <inheritdoc cref="FurniData.TryGetInfo(IItem, out FurniInfo?)" />
-    public static bool TryGetInfo(this IItem item, [NotNullWhen(true)] out FurniInfo? info) => FurniData.TryGetInfo(item, out info);
+    public static bool TryGetInfo(this IItem item, [NotNullWhen(true)] out FurniInfo? info)
+    {
+        if (_furniData is not { } furniData)
+        {
+            info = null;
+            return false;
+        }
+
+        return furniData.TryGetInfo(item, out info);
+    }
 
     /// <summary>
     /// Gets the identifier of this item.
     /// </summary>
+    /// <remarks>
+    /// This method may throw an exception if extensions have not been initialized.
+    /// </remarks>
     public static string GetIdentifier(this IItem item) => item.Identifier ?? GetInfo(item).Identifier;
 
     /// <summary>
@@ -113,9 +159,15 @@ public static class Extensions
         return new ItemDescriptor(item.Type, item.Kind, item.Identifier, variant);
     }
 
+    /// <summary>
+    /// Attempts to get the name of the item from game data if it is available.
+    /// </summary>
+    /// <param name="item">The item to retrieve the name of.</param>
+    /// <param name="name">The name of the item.</param>
+    /// <returns>Whether the item name was successfully retrieved from game data.</returns>
     public static bool TryGetName(this IItem item, [NotNullWhen(true)] out string? name)
     {
-        if (!IsInitialized)
+        if (_furniData is not { } furniData || _texts is not { } texts)
         {
             name = null;
             return false;
@@ -126,11 +178,11 @@ public static class Extensions
         switch (item.Type)
         {
             case ItemType.Floor or ItemType.Wall:
-                FurniData.TryGetInfo(item, out FurniInfo? info);
+                furniData.TryGetInfo(item, out FurniInfo? info);
                 if ((item.Identifier == "poster" || info?.Identifier == "poster") &&
                     item.TryGetVariant(out variant))
                 {
-                    if (Texts.TryGetPosterName(variant, out string? posterName))
+                    if (texts.TryGetPosterName(variant, out string? posterName))
                     {
                         name = posterName;
                     }
@@ -149,7 +201,7 @@ public static class Extensions
             case ItemType.Badge:
                 if (TryGetVariant(item, out variant))
                 {
-                    if (Texts.TryGetBadgeName(variant, out string? badgeName) &&
+                    if (texts.TryGetBadgeName(variant, out string? badgeName) &&
                         !string.IsNullOrWhiteSpace(badgeName))
                     {
                         name = badgeName;
@@ -165,7 +217,7 @@ public static class Extensions
                 if (TryGetVariant(item, out variant))
                 {
                     if (int.TryParse(variant, out int effectId) &&
-                        Texts.TryGetEffectName(effectId, out string? effectName))
+                        texts.TryGetEffectName(effectId, out string? effectName))
                     {
                         name = string.IsNullOrWhiteSpace(effectName) ? variant : effectName;
                         return true;
@@ -178,9 +230,15 @@ public static class Extensions
         return false;
     }
 
+    /// <summary>
+    /// Attempts to get the description of the item from game data if it is available.
+    /// </summary>
+    /// <param name="item">The item to retrieve the description of.</param>
+    /// <param name="description">The description of the item.</param>
+    /// <returns>Whether the item description was successfully retrieved from game data.</returns>
     public static bool TryGetDescription(this IItem item, [NotNullWhen(true)] out string? description)
     {
-        if (!IsInitialized)
+        if (_furniData is not { } furniData || _texts is not { } texts)
         {
             description = null;
             return false;
@@ -191,12 +249,12 @@ public static class Extensions
         switch (item.Type)
         {
             case ItemType.Floor or ItemType.Wall:
-                FurniData.TryGetInfo(item, out FurniInfo? info);
+                furniData.TryGetInfo(item, out FurniInfo? info);
                 if ((item.Identifier == "poster" ||
                     info?.Identifier == "poster") &&
                     item.TryGetVariant(out variant))
                 {
-                    if (Texts.TryGetPosterDescription(variant, out description))
+                    if (texts.TryGetPosterDescription(variant, out description))
                     {
                         return !string.IsNullOrWhiteSpace(description);
                     }
@@ -209,7 +267,7 @@ public static class Extensions
                 break;
             case ItemType.Badge:
                 if (TryGetVariant(item, out variant) &&
-                    Texts.TryGetBadgeDescription(variant, out description))
+                    texts.TryGetBadgeDescription(variant, out description))
                 {
                     return !string.IsNullOrWhiteSpace(description);
                 }
@@ -217,7 +275,7 @@ public static class Extensions
             case ItemType.Effect:
                 if (TryGetVariant(item, out variant) &&
                     int.TryParse(variant, out int effectId) &&
-                    Texts.TryGetEffectDescription(effectId, out description))
+                    texts.TryGetEffectDescription(effectId, out description))
                 {
                     return !string.IsNullOrWhiteSpace(description);
                 }
@@ -299,25 +357,32 @@ public static class Extensions
     /// <summary>
     /// Selects items with the specified furni identifier.
     /// </summary>
+    /// <remarks>
+    /// This method may throw an exception if extensions have not been initialized.
+    /// </remarks>
     public static IEnumerable<T> OfKind<T>(this IEnumerable<T> items, string identifier)
         where T : IItem
     {
         return items.Where(item =>
-            FurniData.TryGetInfo(item, out FurniInfo? info) &&
-            info.Identifier.Equals(identifier, StringComparison.OrdinalIgnoreCase)
+            (item.Identifier?.Equals(identifier) == true) ||
+            (RequireFurniData().TryGetInfo(item, out FurniInfo? info) &&
+            info.Identifier.Equals(identifier, StringComparison.OrdinalIgnoreCase))
         );
     }
 
     /// <summary>
     /// Selects items with any of the specified furni identifiers.
     /// </summary>
+    /// <remarks>
+    /// This method may throw an exception if extensions have not been initialized.
+    /// </remarks>
     public static IEnumerable<T> OfKind<T>(this IEnumerable<T> items, IEnumerable<string> identifiers)
         where T : IItem
     {
         HashSet<string> set = new(identifiers, StringComparer.OrdinalIgnoreCase);
         return items.Where(item =>
-            FurniData.TryGetInfo(item, out FurniInfo? info) &&
-            set.Contains(info.Identifier)
+            (item.Identifier is string identifier && set.Contains(identifier)) ||
+            (RequireFurniData().TryGetInfo(item, out FurniInfo? info) && set.Contains(info.Identifier))
         );
     }
 
@@ -334,8 +399,9 @@ public static class Extensions
         where T : IItem
     {
         return items.Where(item =>
-            FurniData.TryGetInfo(item, out FurniInfo? info) &&
-            !info.Identifier.Equals(identifier, StringComparison.OrdinalIgnoreCase)
+            (item.Identifier?.Equals(identifier) == false) ||
+            (RequireFurniData().TryGetInfo(item, out FurniInfo? info) &&
+            !info.Identifier.Equals(identifier, StringComparison.OrdinalIgnoreCase))
         );
     }
 
@@ -347,8 +413,8 @@ public static class Extensions
     {
         HashSet<string> set = new(identifiers, StringComparer.OrdinalIgnoreCase);
         return items.Where(item =>
-            FurniData.TryGetInfo(item, out FurniInfo? info) &&
-            !set.Contains(info.Identifier)
+            (item.Identifier is string identifier && !set.Contains(identifier)) ||
+            (RequireFurniData().TryGetInfo(item, out FurniInfo? info) && !set.Contains(info.Identifier))
         );
     }
 
@@ -362,7 +428,7 @@ public static class Extensions
     public static IEnumerable<T> OfVariant<T>(this IEnumerable<T> items, string variant)
         where T : IItem
     {
-        return items.Where(item => TryGetVariant(item, out string? v) && variant.Equals(v));
+        return items.Where(item => TryGetVariant(item, out string? v) && variant.Equals(v, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -601,6 +667,9 @@ public static class Extensions
     #endregion
 
     #region - Furni -
+    /// <summary>
+    /// Attempts to get the size of the item.
+    /// </summary>
     public static Point? GetSize<TItem>(this TItem item)
         where TItem : IItem
     {
@@ -618,6 +687,9 @@ public static class Extensions
         return null;
     }
 
+    /// <summary>
+    /// Attempts to get the size of the item.
+    /// </summary>
     public static bool TryGetSize<TItem>(this TItem item, out Point size)
         where TItem : IItem
     {
@@ -654,7 +726,7 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Gets the area occupied by a floor item.
+    /// Attempts to get the area occupied by a floor item.
     /// </summary>
     public static Area? GetArea<TFloorItem>(this TFloorItem item)
         where TFloorItem : IFloorItem

@@ -13,6 +13,8 @@ namespace Xabbo.Core.GameData;
 /// </summary>
 public sealed class FurniData : IReadOnlyCollection<FurniInfo>
 {
+    const int PosterKind = 4001;
+
     public static FurniData LoadJson(string json) => new(Json.FurniData.Load(json));
     public static FurniData LoadJsonFile(string path) => LoadJson(File.ReadAllText(path));
 
@@ -429,21 +431,10 @@ public sealed class FurniData : IReadOnlyCollection<FurniInfo>
     /// </summary>
     public bool HasVariant(IItem item) => item.Type switch
     {
-        ItemType.Wall => HasVariant(GetInfo(item)),
+        ItemType.Wall => TryGetInfo(item, out var info) ? HasVariant(info) : MayHaveVariant(item),
         ItemType.Badge or ItemType.Effect or ItemType.Bot => true,
         _ => false
     };
-
-    private static string? GetVariantInternal(IItem item) => (item switch
-    {
-        ItemDescriptor x => x.Variant,
-        IFloorItem x => x.Data.Value,
-        IWallItem x => x.Data,
-        IInventoryItem x => x.Data.Value,
-        IMarketplaceOffer x => x.Data.Value,
-        ICatalogProduct x => x.Variant,
-        _ => null
-    })?.Trim();
 
     /// <summary>
     /// Gets the item's variant, or null if the specified item does not have a variant.
@@ -452,14 +443,14 @@ public sealed class FurniData : IReadOnlyCollection<FurniInfo>
     {
         if (HasVariant(item))
         {
-            return GetVariantInternal(item) ??
+            return item.GetVariant() ??
                 throw new ArgumentException("Failed to get variant for the specified item.", nameof(item));
         }
         return null;
     }
 
     /// <summary>
-    /// Attempts to get the variant of the specified item.
+    /// Attempts to get the variant of the specified item, if the item has a variant.
     /// </summary>
     public bool TryGetVariant(IItem item, [NotNullWhen(true)] out string? variant)
     {
@@ -469,7 +460,7 @@ public sealed class FurniData : IReadOnlyCollection<FurniInfo>
             return false;
         }
 
-        variant = GetVariantInternal(item);
+        variant = ExtractPotentialVariant(item);
         return variant is not null;
     }
 
@@ -522,4 +513,38 @@ public sealed class FurniData : IReadOnlyCollection<FurniInfo>
     }
 
     public static FurniData FromOriginsTexts(ExternalTexts texts) => new(texts);
+
+    /// <summary>
+    /// Attempts to extract the variant string from the item.
+    /// </summary>
+    /// <remarks>
+    /// The returned string is not guaranteed to be the item variant, which may be unrelated
+    /// extra data contained within the item. The caller should first check whether
+    /// <see cref="FurniData.HasVariant(IItem)"/> returns true to determine whether this method
+    /// will return the item's variant string.
+    /// </remarks>
+    public static string? ExtractPotentialVariant(IItem item) => (item switch
+    {
+        ItemDescriptor x => x.Variant,
+        IFloorItem x => x.Data.Value,
+        IWallItem x => x.Data,
+        IInventoryItem x => x.Data.Value,
+        IMarketplaceOffer x => x.Data.Value,
+        ICatalogProduct x => x.Variant,
+        _ => null
+    })?.Trim();
+
+    /// <summary>
+    /// Gets whether the item may have a variant (not state) in its item data.
+    /// </summary>
+    /// <remarks>
+    /// You should call <see cref="FurniData.HasVariant(IItem)"/> or
+    /// <see cref="FurniData.TryGetVariant(IItem, out string?)"/> if furni data is available.
+    /// </remarks>
+    public static bool MayHaveVariant(IItem item) => item.Type switch
+    {
+        ItemType.Wall => item.Identifier?.Equals("poster") == true || item.Kind == PosterKind,
+        ItemType.Badge or ItemType.Effect or ItemType.Bot => true,
+        _ => false
+    };
 }
