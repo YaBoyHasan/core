@@ -19,6 +19,7 @@ public sealed partial class PlaceWallItemTask(
     : InterceptorTask<PlaceWallItemTask.Result>(interceptor)
 {
     public enum Result { Error, Success }
+    const string FurniPlacementError = "furni_placement_error";
 
     public Id ItemId { get; } = itemId;
     public WallLocation Location { get; } = location;
@@ -30,5 +31,13 @@ public sealed partial class PlaceWallItemTask(
     {
         if (msg.Item.Id == Math.Abs(ItemId))
             SetResult(Result.Success);
+    }
+
+    // This is also received on Shockwave, but there is no mapping for the header.
+    [Intercept]
+    void HandleNotificationDialog(NotificationDialogMsg msg)
+    {
+        if (msg.Type == FurniPlacementError)
+            SetResult(Result.Error);
     }
 }
