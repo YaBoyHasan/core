@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Extensions.Logging;
@@ -134,6 +134,17 @@ public sealed partial class RoomManager(IInterceptor interceptor, ILoggerFactory
     /// Gets whether the user has permission to ban in the current room.
     /// </summary>
     public bool CanBan => CheckPermission(Room?.Data?.Moderation.Ban);
+
+    /// <summary>
+    /// Gets whether the user has permission to trade in the current room.
+    /// </summary>
+    public bool CanTrade => Room?.Data?.Trading switch
+    {
+        TradePermissions.Allowed => true,
+        TradePermissions.RightsHolders => HasRights,
+        TradePermissions.None or TradePermissions.NotAllowed => false,
+        _ => false
+    };
 
     /// <summary>
     /// Retrieves the room data from the cache if it is available.

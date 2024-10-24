@@ -72,7 +72,7 @@ public class Heightmap : IHeightmap, IEnumerable<HeightmapTile>, IParserComposer
             else if (!Tile.CompareZ(surfaceHeight.Value, tile.Height))
                 return false;
         }
-        return false;
+        return true;
     }
 
     /// <summary>
@@ -92,8 +92,6 @@ public class Heightmap : IHeightmap, IEnumerable<HeightmapTile>, IParserComposer
         {
             for (int x = area.Min.X; x <= area.Max.X - size.X + 1; x++)
             {
-                if (entry == (x, y))
-                    continue;
                 var placementArea = new Area(size).At(x, y);
                 if (!placementArea.Contains(entry) && CanPlaceAt(placementArea))
                     yield return (x, y);
