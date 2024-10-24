@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 using Microsoft.Extensions.Logging;
@@ -101,7 +101,10 @@ public sealed partial class RoomManager(IInterceptor interceptor, ILoggerFactory
         private set
         {
             if (Set(ref _rightsLevel, value))
+            {
                 RaisePropertyChanged(nameof(HasRights));
+                RefreshPermissions();
+            }
         }
     }
 
@@ -264,8 +267,24 @@ public sealed partial class RoomManager(IInterceptor interceptor, ILoggerFactory
 
     private void UpdateRoomData(RoomData roomData)
     {
-        Log.LogDebug("Room data updated. (name:{Name})", roomData.Name);
-        RoomDataUpdated?.Invoke(new RoomDataEventArgs(roomData));
+        if (_currentRoom is { } room && room.Id == roomData.Id)
+        {
+            Log.LogDebug("Room data updated. (name:{Name})", roomData.Name);
+
+            room.Data = roomData;
+            // Moderation and trading permissions may have changed.
+            RefreshPermissions();
+            RoomDataUpdated?.Invoke(new RoomDataEventArgs(roomData));
+        }
+    }
+
+    private void UpdateChatSettings(ChatSettings chatSettings)
+    {
+        if (_currentRoom is { Data: RoomData roomData })
+        {
+            roomData.ChatSettings = chatSettings;
+            RoomDataUpdated?.Invoke(new RoomDataEventArgs(roomData));
+        }
     }
 
     private void UpdateRightsLevel(RightsLevel rightsLevel)
@@ -273,6 +292,14 @@ public sealed partial class RoomManager(IInterceptor interceptor, ILoggerFactory
         RightsLevel = rightsLevel;
         Log.LogDebug("Rights level updated to {Level}.", rightsLevel);
         RightsUpdated?.Invoke();
+    }
+
+    private void RefreshPermissions()
+    {
+        RaisePropertyChanged(nameof(CanMute));
+        RaisePropertyChanged(nameof(CanKick));
+        RaisePropertyChanged(nameof(CanBan));
+        RaisePropertyChanged(nameof(CanTrade));
     }
 
     #region - Furni -

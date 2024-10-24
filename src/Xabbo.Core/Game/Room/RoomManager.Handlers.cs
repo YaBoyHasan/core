@@ -32,11 +32,7 @@ partial class RoomManager
 
         _roomDataCache[roomData.Id] = roomData;
 
-        if (IsInRoom && roomData.Id == _currentRoom?.Id)
-        {
-            _currentRoom.Data = roomData;
-            UpdateRoomData(roomData);
-        }
+        UpdateRoomData(roomData);
     }
 
     [InterceptIn(nameof(In.OpenConnection))]
@@ -370,11 +366,7 @@ partial class RoomManager
     [InterceptIn(nameof(In.RoomChatSettings))]
     private void HandleRoomChatSettings(Intercept e)
     {
-        if (!EnsureRoomInternal(out Room? room) || room.Data is null)
-            return;
-
-        room.Data.ChatSettings = e.Packet.Read<ChatSettings>();
-        UpdateRoomData(room.Data);
+        UpdateChatSettings(e.Packet.Read<ChatSettings>());
     }
 
     [Intercept(~ClientType.Shockwave)]
