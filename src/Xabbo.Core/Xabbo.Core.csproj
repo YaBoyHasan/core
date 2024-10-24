@@ -37,7 +37,7 @@
     <None Include="..\..\res\xabbo-skull-128.png" Pack="true" PackagePath="icon.png" />
   </ItemGroup>
 
-  <PropertyGroup Label="Rename paths">
+  <PropertyGroup Label="Rename paths" Condition="'$(Configuration)'=='Release'">
     <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
     <PathMap>$(AppOutputBase)=Xabbo.Core\</PathMap>
   </PropertyGroup>
