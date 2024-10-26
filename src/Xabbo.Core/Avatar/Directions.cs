@@ -66,3 +66,21 @@ public enum Directions
     /// </remarks>
     NorthWest = 7
 }
+
+partial class XabboEnumExtensions
+{
+    public static Point ToVector(this Directions direction) => direction switch
+    {
+        Directions.North => (0, -1),
+        Directions.NorthEast => (1, -1),
+        Directions.East => (1, 0),
+        Directions.SouthEast => (1, 1),
+        Directions.South => (0, 1),
+        Directions.SouthWest => (-1, 1),
+        Directions.West => (-1, 0),
+        Directions.NorthWest => (-1, -1),
+        _ => throw new System.Exception($"Unknown direction: '{direction}'.")
+    };
+
+    public static Directions Opposite(this Directions direction) => (Directions)(((int)direction + 4) % 8);
+}
