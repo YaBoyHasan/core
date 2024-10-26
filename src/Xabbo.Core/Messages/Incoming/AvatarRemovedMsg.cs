@@ -35,5 +35,15 @@ public sealed record AvatarRemovedMsg(int Index) : IMessage<AvatarRemovedMsg>
         return new(index);
     }
 
-    void IComposer.Compose(in PacketWriter p) => p.WriteInt(Index);
+    void IComposer.Compose(in PacketWriter p)
+    {
+        if (p.Client is ClientType.Shockwave)
+        {
+            p.WriteContent(Index.ToString());
+        }
+        else
+        {
+            p.WriteString(Index.ToString());
+        }
+    }
 }
