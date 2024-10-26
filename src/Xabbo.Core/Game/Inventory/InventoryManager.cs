@@ -205,14 +205,21 @@ public sealed partial class InventoryManager : GameStateManager
 
     private async Task<IEnumerable<InventoryItem>> LoadInventoryModernAsync(CancellationToken cancellationToken)
     {
-        var loadItemsTcs = _loadInventoryItemsTcs
-            = new TaskCompletionSource<IEnumerable<InventoryItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
-        cancellationToken.Register(() => loadItemsTcs.TrySetCanceled());
+        try
+        {
+            var loadItemsTcs = _loadInventoryItemsTcs
+                = new TaskCompletionSource<IEnumerable<InventoryItem>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            cancellationToken.Register(() => loadItemsTcs.TrySetCanceled());
 
-        _logger.LogDebug("Requesting inventory");
-        Interceptor.Send(Out.RequestFurniInventory);
+            _logger.LogDebug("Requesting inventory");
+            Interceptor.Send(Out.RequestFurniInventory);
 
-        return await loadItemsTcs.Task;
+            return await loadItemsTcs.Task;
+        }
+        finally
+        {
+            _loadInventoryItemsTcs = null;
+        }
     }
 
     private async Task<IEnumerable<InventoryItem>> LoadInventoryOriginsAsync(
