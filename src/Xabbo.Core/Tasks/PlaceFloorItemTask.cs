@@ -42,4 +42,13 @@ public sealed partial class PlaceFloorItemTask(
         if (msg.Type == FurniPlacementError)
             SetResult(Result.Error);
     }
+
+    // Receiving STRIPINFO on Shockwave indicates a failure to place an item.
+    [Intercept(ClientType.Shockwave)]
+    [InterceptIn(nameof(Xabbo.Messages.Shockwave.In.STRIPINFO))]
+    void HandleStripInfo(Intercept e)
+    {
+        if (SetResult(Result.Error))
+            e.Block();
+    }
 }
