@@ -42,7 +42,7 @@ public class GameDataUrlProvider : IGameDataUrlProvider
                 GameDataType.FigureData => "gamedata/figuredata",
                 GameDataType.FurniData => "gamedata/furnidata_json",
                 GameDataType.ExternalTexts => "gamedata/external_flash_texts",
-                GameDataType.ExternalVariables => "gamedata/external_flash_texts",
+                GameDataType.ExternalVariables => "gamedata/external_variables",
                 GameDataType.ProductData => "gamedata/productdata_json",
                 _ => null,
             };
