@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ public class GameDataManager : IGameDataManager
     public FurniData? Furni { get; private set; }
     public ProductData? Products { get; private set; }
     public ExternalTexts? Texts { get; private set; }
+    public ExternalVariables? Variables { get; private set; }
 
     public event Action? Loading;
     public event Action? Loaded;
@@ -120,6 +122,9 @@ public class GameDataManager : IGameDataManager
                         break;
                     case GameDataType.ExternalTexts:
                         Texts = ExternalTexts.Load(filePath);
+                        break;
+                    case GameDataType.ExternalVariables:
+                        Variables = ExternalVariables.Load(filePath);
                         break;
                     case GameDataType.ProductData:
                         Products = ProductData.LoadJsonFile(filePath);

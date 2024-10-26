@@ -21,4 +21,9 @@ public interface IGameDataProvider
     /// Gets the external texts, if they are available.
     /// </summary>
     ExternalTexts? Texts { get; }
+
+    /// <summary>
+    /// Gets the external variables, if they are available.
+    /// </summary>
+    ExternalVariables? Variables { get; }
 }

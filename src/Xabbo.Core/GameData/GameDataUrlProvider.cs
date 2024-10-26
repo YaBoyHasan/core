@@ -31,6 +31,7 @@ public class GameDataUrlProvider : IGameDataUrlProvider
                 GameDataType.FigureData => $"{baseUrlGamedata}/figuredata/1",
                 GameDataType.FurniData => $"{baseUrl}/gamedata/furnidata/{hash}",
                 GameDataType.ExternalTexts => $"{baseUrlGamedata}/external_texts/1",
+                GameDataType.ExternalVariables => $"{baseUrlGamedata}/external_variables/1",
                 _ => null
             };
         }

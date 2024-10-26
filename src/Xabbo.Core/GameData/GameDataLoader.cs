@@ -179,11 +179,13 @@ public class GameDataLoader(
                 var fetchFigureDataHashTask = FetchHashAsync(hotel, GameDataType.FigureData, cancellationToken);
                 var fetchFurniDataHashTask = FetchHashAsync(hotel, GameDataType.FurniData, cancellationToken);
                 var fetchExternalTextsHashTask = FetchHashAsync(hotel, GameDataType.ExternalTexts, cancellationToken);
+                var fetchExternalVariablesHashTask = FetchHashAsync(hotel, GameDataType.ExternalVariables, cancellationToken);
 
                 await Task.WhenAll(
                     fetchFigureDataHashTask,
                     fetchFurniDataHashTask,
-                    fetchExternalTextsHashTask
+                    fetchExternalTextsHashTask,
+                    fetchExternalVariablesHashTask
                 );
 
                 fetchedHashes = new GameDataHashes
@@ -191,6 +193,7 @@ public class GameDataLoader(
                     [GameDataType.FigureData] = await fetchFigureDataHashTask,
                     [GameDataType.FurniData] = await fetchFurniDataHashTask,
                     [GameDataType.ExternalTexts] = await fetchExternalTextsHashTask,
+                    [GameDataType.ExternalVariables] = await fetchExternalVariablesHashTask,
                 };
             }
             else
