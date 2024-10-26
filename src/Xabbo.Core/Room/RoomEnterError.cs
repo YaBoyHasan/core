@@ -14,7 +14,10 @@ public enum RoomEnterError
     /// The room is full.
     /// </summary>
     Full = 1,
-    CannotEnter = 2,
+    /// <summary>
+    /// The room is closed.
+    /// </summary>
+    Closed = 2,
     // 3 client disconnects
     /// <summary>
     /// The user is banned from the room.
