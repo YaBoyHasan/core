@@ -155,7 +155,8 @@ public static partial class H
     #region - Text -
     private static readonly Dictionary<char, string> _characterMap = new()
     {
-        { '\x7c', "♥️" },
+        // ISO-8859-1
+        { '\x7c', "🤍" },
         { '\x80', "€" },
         { '\x82', "‚" },
         { '\x83', "❤️" },
@@ -196,6 +197,13 @@ public static partial class H
         { '\xbd', "≥" },
         { '\xbe', "🔒" },
         { '\xf7', "👎" },
+        // Unicode
+        { '\u0192', "🖤" },
+        { '\u2014', "🎵" },
+        { '\u2018', "🔒" },
+        { '\u2020', "💣" },
+        { '\u2021', "🚫" },
+        { '\u2022', "👍" },
     };
 
     public static IReadOnlyDictionary<char, string> GetAltCharacterMap() => _characterMap.ToDictionary(x => x.Key, x => x.Value);
