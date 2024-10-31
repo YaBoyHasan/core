@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -140,7 +141,7 @@ public class AvatarStatus : IAvatarStatus, IReadOnlyDictionary<string, IReadOnly
                 if (fragments.TryGetValue(Stance.ToString(), out string[]? args))
                 {
                     if (args.Length > 0)
-                        return float.Parse(args[0]);
+                        return float.Parse(args[0], CultureInfo.InvariantCulture);
                 }
             }
             return null;

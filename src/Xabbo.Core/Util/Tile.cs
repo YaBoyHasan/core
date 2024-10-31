@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Globalization;
 using Xabbo.Messages;
 
 namespace Xabbo.Core;
@@ -61,7 +61,7 @@ public readonly struct Tile(int x, int y, float z) : IParserComposer<Tile>
         if (split.Length != 3 ||
             !int.TryParse(split[0], out int x) ||
             !int.TryParse(split[1], out int y) ||
-            !float.TryParse(split[2], out float z))
+            !float.TryParse(split[2], CultureInfo.InvariantCulture, out float z))
         {
             return false;
         }

@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using Xabbo.Core.Messages.Incoming;
+﻿using System.Globalization;
+using System.Text.Json.Serialization;
 using Xabbo.Messages;
 
 namespace Xabbo.Core;
@@ -64,7 +64,7 @@ public class FloorItem : Furni, IFloorItem, IParserComposer<FloorItem>
     {
         "FALSE" or "OFF" or "C" => 0,
         "TRUE" or "ON" or "O" => 1,
-        _ => double.TryParse(Data.Value, out double state) ? (int)state : -1
+        _ => double.TryParse(Data.Value, CultureInfo.InvariantCulture, out double state) ? (int)state : -1
     };
 
     public string Colors { get; set; } = "";
