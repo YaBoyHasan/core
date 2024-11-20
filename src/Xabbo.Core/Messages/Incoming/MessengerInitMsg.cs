@@ -27,11 +27,6 @@ public sealed record MessengerInitMsg : IMessage<MessengerInitMsg>
     public List<CampaignMessage> CampaignMessages { get; init; } = [];
     public List<(int Id, string Name)> Categories { get; init; } = [];
 
-    public int RequestLimit { get; set; }
-    public int RequestCount { get; set; }
-    public int MessageLimit { get; set; }
-    public int MessageCount { get; set; }
-
     static MessengerInitMsg IParser<MessengerInitMsg>.Parse(in PacketReader p)
     {
         if (p.Client is not ClientType.Shockwave)
@@ -56,10 +51,6 @@ public sealed record MessengerInitMsg : IMessage<MessengerInitMsg>
                 NormalLimit = p.ReadInt(),
                 ExtendedLimit = p.ReadInt(),
                 Friends = [.. p.ParseArray<Friend>()],
-                RequestLimit = p.ReadInt(),
-                RequestCount = p.ReadInt(),
-                MessageLimit = p.ReadInt(),
-                MessageCount = p.ReadInt(),
                 CampaignMessages = [.. p.ParseArray<CampaignMessage>()]
             };
         }
@@ -86,10 +77,6 @@ public sealed record MessengerInitMsg : IMessage<MessengerInitMsg>
             p.WriteInt(NormalLimit);
             p.WriteInt(ExtendedLimit);
             p.ComposeArray(Friends);
-            p.WriteInt(RequestLimit);
-            p.WriteInt(RequestCount);
-            p.WriteInt(MessageLimit);
-            p.WriteInt(MessageCount);
             p.ComposeArray(CampaignMessages);
         }
     }

@@ -48,6 +48,7 @@ public class Friend : IFriend, IParserComposer<Friend>
             Motto = p.ReadString();
             IsOnline = p.ReadBool();
             CanFollow = p.ReadBool();
+            Location = p.ReadString();
             LastAccess = p.ReadString();
             Figure = p.ReadString();
             CategoryId = p.ReadInt();
@@ -95,6 +96,7 @@ public class Friend : IFriend, IParserComposer<Friend>
             p.WriteString(Location);
             p.WriteString(LastAccess);
             p.WriteString(Figure);
+            p.WriteInt(CategoryId);
         }
         else
         {
