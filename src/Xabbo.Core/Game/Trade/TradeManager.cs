@@ -127,27 +127,20 @@ public sealed partial class TradeManager(
         set => Set(ref _isAwaitingConfirmation, value);
     }
 
-    private bool TryStartTradeOrigins(IRoom room, TradeOffer traderOffer, TradeOffer tradeeOffer)
+    private bool TryInitTradeOrigins(IRoom room, TradeOffer traderOffer, TradeOffer tradeeOffer)
     {
         if (traderOffer.Count > 0 || tradeeOffer.Count > 0)
             return false;
 
-        if (traderOffer is not { UserName: string traderName } ||
-            tradeeOffer is not { UserName: string tradeeName })
+        if (!room.TryGetUserById(traderOffer.UserId, out var trader))
         {
-            _logger.LogWarning("Trader names unavailable.");
+            _logger.LogWarning("Failed to find user with ID {UserId}.", traderOffer.UserId);
             return false;
         }
 
-        if (!room.TryGetUserByName(traderName, out var trader))
+        if (!room.TryGetUserById(tradeeOffer.UserId, out var tradee))
         {
-            _logger.LogWarning("Failed to find user with name '{UserName}'.", traderName);
-            return false;
-        }
-
-        if (!room.TryGetUserByName(tradeeName, out var tradee))
-        {
-            _logger.LogWarning("Failed to find user with name '{UserName}'.", tradeeName);
+            _logger.LogWarning("Failed to find user with ID {UserId}.", tradeeOffer.UserId);
             return false;
         }
 
@@ -187,16 +180,14 @@ public sealed partial class TradeManager(
     {
         ResetTrade();
 
-        if (_profileManager.UserData is not { Id: Id selfId, Name: string selfName })
+        if (_profileManager.UserData is not { Id: Id selfId })
         {
             _logger.LogWarning("User data is not available.");
             return false;
         }
 
-        if (Session.Is(ClientType.Origins))
-            IsTrader = trader.Name.Equals(selfName);
-        else
-            IsTrader =  trader.Id == selfId;
+        _logger.LogInformation("Trader Id: {TraderId}, Self Id: {SelfId}", trader.Id, selfId);
+        IsTrader = trader.Id == selfId;
         Self = IsTrader ? trader : tradee;
         Partner = IsTrader ? tradee : trader;
 
@@ -222,8 +213,11 @@ public sealed partial class TradeManager(
             // The trade begins with an empty trading list.
             if (Session.Is(ClientType.Origins))
             {
-                if (!TryStartTradeOrigins(room, first, second))
+                if (!TryInitTradeOrigins(room, first, second))
+                {
+                    _logger.LogDebug("Failed to initialize trade on Origins.");
                     return;
+                }
             }
             else
             {

@@ -25,7 +25,7 @@ partial class ProfileManager
 
         if (_tcsUserData.TrySetResult(UserData))
         {
-            Log.LogInformation("Loaded user data.");
+            Log.LogInformation("Loaded user data. (ID: {UserId}, Name: '{UserName}')", UserData.Id, UserData.Name);
             UserDataLoaded?.Invoke();
         }
         else
