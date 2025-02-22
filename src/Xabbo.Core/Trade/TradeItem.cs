@@ -24,6 +24,9 @@ public class TradeItem : ITradeItem, IParserComposer<TradeItem>
     public long Extra { get; set; }
     public Point? Size { get; set; }
     public string SlotId { get; set; } = "";
+    public string Colors { get; set; } = "";
+    public string CategoryName { get; set; } = "";
+    public int SongId { get; set; }
 
     bool IInventoryItem.IsRecyclable => true;
     bool IInventoryItem.IsTradeable => true;
@@ -71,22 +74,32 @@ public class TradeItem : ITradeItem, IParserComposer<TradeItem>
 
     private void ParseOrigins(in PacketReader p)
     {
-        ItemId = p.ReadInt();
-        SlotId = p.ReadInt().ToString();
-        string strItemType = p.ReadString();
+        ItemId = p.ReadId();
+        string strItemType = p.ReadString().ToUpperInvariant();
         Type = strItemType switch
         {
             "S" => ItemType.Floor,
             "I" => ItemType.Wall,
             _ => throw new Exception($"Invalid item type: {strItemType}"),
         };
-        Id = p.ReadInt();
+        Id = p.ReadId();
+        Kind = p.ReadInt();
         Identifier = p.ReadString();
         if (Type == ItemType.Floor)
+        {
+            Colors = p.ReadString();
             Size = (p.ReadInt(), p.ReadInt());
+        }
 
-        // Colors (FloorItem), Props (WallItem)
+        CategoryName = p.ReadString();
+        IsGroupable = p.ReadBool();
         Data = new LegacyData { Value = p.ReadString() };
+        CreationDay = p.ReadInt();
+        CreationMonth = p.ReadInt();
+        CreationYear = p.ReadInt();
+
+        if (Type is ItemType.Floor)
+            SongId = p.ReadInt();
     }
 
     void IComposer.Compose(in PacketWriter p)

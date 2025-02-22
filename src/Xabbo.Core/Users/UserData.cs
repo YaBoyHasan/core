@@ -83,6 +83,11 @@ public sealed class UserData : IUserData, IParserComposer<UserData>
 
             switch (fields[0])
             {
+                case "user_id":
+                    if (!Id.TryParse(fields[1], out Id userId))
+                        throw new Exception($"Failed to parse user_id in user data: '{fields[1]}'.");
+                    Id = userId;
+                    break;
                 case "name":
                     Name = fields[1];
                     break;
@@ -96,13 +101,17 @@ public sealed class UserData : IUserData, IParserComposer<UserData>
                     CustomData = fields[1];
                     break;
                 case "ph_tickets":
-                    PoolTickets = int.Parse(fields[1]);
+                    if (!int.TryParse(fields[1], out int poolTickets))
+                        throw new Exception($"Failed to parse ph_tickets in user data: '{fields[1]}'.");
+                    PoolTickets = poolTickets;
                     break;
                 case "ph_figure":
                     PoolFigure = fields[1];
                     break;
                 case "photo_film":
-                    PhotoFilm = int.Parse(fields[1]);
+                    if (!int.TryParse(fields[1], out int photoFilm))
+                        throw new Exception($"Failed to parse photo_film in user data: '{fields[1]}'.");
+                    PhotoFilm = photoFilm;
                     break;
                 case "directMail":
                     DirectMail = fields[1] != "0";

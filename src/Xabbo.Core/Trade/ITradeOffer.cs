@@ -10,17 +10,7 @@ public interface ITradeOffer : IReadOnlyList<ITradeItem>
     /// <summary>
     /// The ID of the user.
     /// </summary>
-    /// <remarks> Used on modern clients.
-    /// </remarks>
-    Id? UserId { get; }
-
-    /// <summary>
-    /// The name of the user.
-    /// </summary>
-    /// <remarks>
-    /// Used on Origins.
-    /// </remarks>
-    string? UserName { get; }
+    Id UserId { get; }
 
     /// <summary>
     /// The number of furni in the trade offer.

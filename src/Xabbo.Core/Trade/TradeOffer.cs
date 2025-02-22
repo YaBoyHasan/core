@@ -8,8 +8,7 @@ namespace Xabbo.Core;
 /// <inheritdoc cref="ITradeOffer"/>
 public sealed class TradeOffer : List<TradeItem>, ITradeOffer, IParserComposer<TradeOffer>
 {
-    public Id? UserId { get; set; }
-    public string? UserName { get; set; }
+    public Id UserId { get; set; }
     /// <remarks>
     /// This appears to be an unused field in the Origins packet structure as users will
     /// automatically unaccept the trade whenever a trade offer updates.
@@ -25,15 +24,7 @@ public sealed class TradeOffer : List<TradeItem>, ITradeOffer, IParserComposer<T
 
     private TradeOffer(in PacketReader p) : this()
     {
-        if (p.Client is ClientType.Shockwave)
-        {
-            UserName = p.ReadString();
-            Accepted = p.ReadBool();
-        }
-        else
-        {
-            UserId = p.ReadId();
-        }
+        UserId = p.ReadId();
 
         AddRange(p.ParseArray<TradeItem>());
 
@@ -46,16 +37,7 @@ public sealed class TradeOffer : List<TradeItem>, ITradeOffer, IParserComposer<T
 
     void IComposer.Compose(in PacketWriter p)
     {
-        if (p.Client is ClientType.Shockwave)
-        {
-            p.WriteString(UserName ?? throw new Exception($"{nameof(UserName)} is required on {p.Client}."));
-            p.WriteBool(Accepted);
-        }
-        else
-        {
-            p.WriteId(UserId ?? throw new Exception($"{nameof(UserId)} is required on {p.Client}."));
-        }
-
+        p.WriteId(UserId);
         p.ComposeArray<TradeItem>(this);
 
         if (p.Client is not ClientType.Shockwave)

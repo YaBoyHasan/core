@@ -112,7 +112,7 @@ public sealed class InventoryItem : IInventoryItem, IParserComposer<InventoryIte
         ItemId = p.ReadId();
         SlotId = p.ReadInt().ToString();
 
-        string strItemType = p.ReadString();
+        string strItemType = p.ReadString().ToUpperInvariant();
         Type = strItemType switch
         {
             "S" => ItemType.Floor,

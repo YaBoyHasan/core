@@ -18,22 +18,6 @@ namespace Xabbo.Core.Messages.Outgoing;
 public sealed record TradeUserMsg(int UserIndex) : IMessage<TradeUserMsg>
 {
     static Identifier IMessage<TradeUserMsg>.Identifier => Out.OpenTrading;
-
-    static TradeUserMsg IParser<TradeUserMsg>.Parse(in PacketReader p) => new(p.Client switch
-    {
-        ClientType.Shockwave => int.Parse(p.ReadContent()),
-        not ClientType.Shockwave => p.ReadInt(),
-    });
-
-    void IComposer.Compose(in PacketWriter p)
-    {
-        if (p.Client is ClientType.Shockwave)
-        {
-            p.WriteContent(UserIndex.ToString());
-        }
-        else
-        {
-            p.WriteInt(UserIndex);
-        }
-    }
+    static TradeUserMsg IParser<TradeUserMsg>.Parse(in PacketReader p) => new(p.ReadInt());
+    void IComposer.Compose(in PacketWriter p) => p.WriteInt(UserIndex);
 }

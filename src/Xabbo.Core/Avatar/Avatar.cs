@@ -66,6 +66,7 @@ public abstract class Avatar(AvatarType type, Id id, int index) : IAvatar, IPars
             User? user = this as User;
 
             p.WriteInt(Index);
+            p.WriteId(Id);
             p.WriteString(Name);
             p.WriteString(Figure);
             p.WriteString(user?.Gender.ToClientString().ToLower() ?? "m");
@@ -100,8 +101,8 @@ public abstract class Avatar(AvatarType type, Id id, int index) : IAvatar, IPars
 
         if (p.Client == ClientType.Shockwave)
         {
-            id = -1;
             index = p.ReadInt();
+            id = p.ReadId();
             name = p.ReadString();
             figure = p.ReadString();
             gender = p.ReadString();

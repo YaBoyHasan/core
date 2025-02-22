@@ -19,6 +19,6 @@ public sealed record OfferTradeItemMsg(Id ItemId) : IMessage<OfferTradeItemMsg>
     public OfferTradeItemMsg(IInventoryItem item) : this(item.ItemId) { }
     static ClientType IMessage<OfferTradeItemMsg>.SupportedClients => ClientType.Origins;
     static Identifier IMessage<OfferTradeItemMsg>.Identifier => Out.TRADE_ADDITEM;
-    static OfferTradeItemMsg IParser<OfferTradeItemMsg>.Parse(in PacketReader p) => new((Id)p.ReadContent());
-    void IComposer.Compose(in PacketWriter p) => p.WriteContent(ItemId.ToString());
+    static OfferTradeItemMsg IParser<OfferTradeItemMsg>.Parse(in PacketReader p) => new(p.ReadId());
+    void IComposer.Compose(in PacketWriter p) => p.WriteId(ItemId);
 }
