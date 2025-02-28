@@ -139,7 +139,7 @@ public sealed class Figure : IEquatable<Figure>, IEnumerable<Figure.Part>
         {
             if (!Part.TryParseString(figurePartString, out var figurePart))
                 return false;
-            if (tempFigure[figurePart.Type] != null)
+            if (tempFigure.Has(figurePart.Type))
                 return false;
             tempFigure.Add(figurePart);
         }
