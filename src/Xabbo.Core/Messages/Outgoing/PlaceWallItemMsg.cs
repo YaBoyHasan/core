@@ -13,17 +13,30 @@ namespace Xabbo.Core.Messages.Outgoing;
 /// Identifiers:
 /// <list type="bullet">
 /// <item>Flash: <see cref="Out.PlaceObject"/></item>
-/// <item>Shockwave: <see cref="Xabbo.Messages.Shockwave.Out.PLACESTUFF"/></item>
+/// <item>Shockwave: <see cref="Xabbo.Messages.Shockwave.Out.PLACEITEM"/></item>
 /// </list>
 /// </summary>
 /// <param name="ItemId">The ID of the wall item to place.</param>
 /// <param name="Location">The location to place the wall item at.</param>
 public sealed record PlaceWallItemMsg(Id ItemId, WallLocation Location) : IMessage<PlaceWallItemMsg>
 {
-    static Identifier IMessage<PlaceWallItemMsg>.Identifier => Out.PlaceObject;
+    static Identifier IMessage<PlaceWallItemMsg>.Identifier => Identifier.Unknown;
+
+    Identifier IMessage.GetIdentifier(ClientType client) => client switch
+    {
+        ClientType.Shockwave => Xabbo.Messages.Shockwave.Out.PLACEITEM,
+        not ClientType.Shockwave => Out.PlaceObject,
+    };
+
+    static bool IMessage<PlaceWallItemMsg>.UseTargetedIdentifiers => true;
 
     static bool IMessage<PlaceWallItemMsg>.Match(in PacketReader p)
     {
+        if (p.Client is ClientType.Shockwave)
+        {
+            return true;
+        }
+
         string content = p.ReadString();
         int index = content.IndexOf(' ');
         if (index < 0 || (index + 1) >= content.Length) return false;
@@ -32,18 +45,33 @@ public sealed record PlaceWallItemMsg(Id ItemId, WallLocation Location) : IMessa
 
     static PlaceWallItemMsg IParser<PlaceWallItemMsg>.Parse(in PacketReader p)
     {
-        string content = p.Client switch
+        Id itemId;
+        WallLocation location;
+
+        if (p.Client is ClientType.Shockwave)
         {
-            ClientType.Flash => p.ReadString(),
-            ClientType.Shockwave => p.ReadContent(),
-            _ => throw new UnsupportedClientException(p.Client),
-        };
+            itemId = p.ReadInt();
 
-        int i = content.IndexOf(' ');
-        if (i < 0)
-            throw new Exception("No separator in PlaceWallItemMsg.");
+            string locationStr = p.ReadString();
+            if (!WallLocation.TryParse(locationStr, out location))
+                throw new Exception($"Failed to parse {nameof(Location)} in {nameof(PlaceWallItemMsg)}: '{locationStr}'.");
+        }
+        else
+        {
+            string content = p.ReadString();
 
-        return new PlaceWallItemMsg((Id)content[..i], (WallLocation)content[(i + 1)..]);
+            int i = content.IndexOf(' ');
+            if (i < 0)
+                throw new Exception("No separator in PlaceWallItemMsg.");
+
+            if (!Id.TryParse(content[..i], out itemId))
+                throw new Exception($"Failed to parse {nameof(ItemId)} in {nameof(PlaceWallItemMsg)}: '{content[..i]}'.");
+
+            if (!WallLocation.TryParse(content[(i + 1)..], out location))
+                throw new Exception($"Failed to parse {nameof(Location)} in {nameof(PlaceWallItemMsg)}: '{content[(i + 1)..]}'.");
+        }
+
+        return new PlaceWallItemMsg(itemId, location);
     }
 
     void IComposer.Compose(in PacketWriter p)
@@ -54,7 +82,8 @@ public sealed record PlaceWallItemMsg(Id ItemId, WallLocation Location) : IMessa
                 p.WriteString($"{ItemId} {Location}");
                 break;
             case ClientType.Shockwave:
-                p.WriteContent($"{ItemId} {Location}");
+                p.WriteId(ItemId);
+                p.WriteString(Location.ToString());
                 break;
             default:
                 throw new UnsupportedClientException(p.Client);
