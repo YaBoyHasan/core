@@ -82,20 +82,28 @@ partial class InventoryManager
     [InterceptIn(nameof(In.FurniListAddOrUpdate))]
     private void HandleInventoryAddOrUpdateFurni(Intercept e)
     {
-        if (_inventory is null) return;
+        if (_inventory is null)
+            return;
 
-        InventoryItem item = e.Packet.Read<InventoryItem>();
-        _inventory.AddOrUpdate(item, out bool added);
+        // read how many items are in this packet
+        int count = e.Packet.Read<int>();
 
-        if (added)
+        for (int i = 0; i < count; i++)
         {
-            Log.LogTrace("Added inventory item {id}.", item.Id);
-            ItemAdded?.Invoke(new InventoryItemEventArgs(item));
-        }
-        else
-        {
-            Log.LogTrace("Updated inventory item {id}.", item.Id);
-            ItemUpdated?.Invoke(new InventoryItemEventArgs(item));
+            // parse one InventoryItem (calls the existing ParseModern under the hood)
+            InventoryItem item = e.Packet.Read<InventoryItem>();
+            _inventory.AddOrUpdate(item, out bool added);
+
+            if (added)
+            {
+                Log.LogTrace("Added inventory item {id}.", item.Id);
+                ItemAdded?.Invoke(new InventoryItemEventArgs(item));
+            }
+            else
+            {
+                Log.LogTrace("Updated inventory item {id}.", item.Id);
+                ItemUpdated?.Invoke(new InventoryItemEventArgs(item));
+            }
         }
     }
 
